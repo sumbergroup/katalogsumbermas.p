@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="icon" width=10px; href="https://drive.google.com/thumbnail?id=1SpFJy8DDaE6n2EPBoXLfMYswSNMqtZag">
+    <link rel="icon" width=10px; href="https://drive.google.com/thumbnail?id=1IOOZnuPZPMOue-PJwyITiMC_4caKf_dk">
     <title>Katalog Sumber Mas Collection</title>
     <style>
         /* Reset dan dasar */
@@ -212,13 +212,66 @@
             padding-top: 12px;
             width: 100%; /* Pastikan mengambil lebar penuh */
         }
-        /* Input Pencarian */
+        /* Input Pencarian and Supplier Select */
         #search-input {
             flex: 1;
             padding: 8px 12px;
             border-radius: 6px;
             border: 1px solid #ccc;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            background-color: white;
         }
+
+        /* Styles for the custom supplier dropdown */
+        .supplier-combobox {
+            position: relative;
+            flex: 1;
+            min-width: 150px; /* Adjust as needed */
+        }
+        #supplier-input {
+            width: 100%;
+            padding: 8px 12px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+            background-color: white;
+            color: #757575;
+        }
+        /* Multi-select dropdown styles */
+        #supplier-suggestions {
+            position: absolute;
+            background-color: white;
+            border: 1px solid #ccc;
+            border-top: none;
+            max-height: 250px; /* Increased height for more options */
+            overflow-y: auto;
+            width: 100%;
+            z-index: 100;
+            list-style: none; /* Changed from ul to div, so this might not apply directly to new structure */
+            padding: 10px; /* Padding for the container */
+            margin: 0;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            display: none; /* Hidden by default */
+            flex-direction: column; /* Arrange checkboxes vertically */
+            gap: 8px; /* Space between items */
+        }
+        #supplier-suggestions label {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            padding: 4px 0; /* Padding for each label */
+        }
+        #supplier-suggestions label:hover {
+            background-color: #f0f0f0;
+        }
+        #supplier-suggestions input[type="checkbox"] {
+            margin-right: 8px;
+            width: auto; /* Override popup-content input style */
+            margin-bottom: 0; /* Override popup-content input style */
+        }
+        /* Removed .supplier-actions styles as the buttons are removed */
+
         /* Filter Harga */
         .price-filter {
             display: flex;
@@ -234,7 +287,6 @@
         /* Grid Produk */
         #products {
             display: grid;
-/*            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));*/
             grid-template-columns: repeat(6, minmax(150px, 1fr));
             gap: 12px;
             padding-top: 12px;
@@ -298,7 +350,7 @@
                 flex-direction: column;
                 align-items: stretch;
             }
-            #search-input {
+            #search-input, .supplier-combobox { /* Ensured both adjust on small screens */
                 margin-bottom: 0px;
             }
             .price-filter {
@@ -314,18 +366,23 @@
 <body>
 <header>
     <div class="header-top">
-            <div class="store-name">
-                <text id="login-button" align="center">&nbsp;Sumber Mas Collection</text>
-                <text id="logout-button" onclick="logout()" align="center">Sumber Mas Collection</text>
+        <div class="store-name">
+            <text id="login-button" align="center">&nbsp;Sumber Mas Collection</text>
+            <text id="logout-button" onclick="logout()" align="center">Sumber Mas Collection</text>
             <div id="user-info"></div>
-            </div>
         </div>
+    </div>
     <div class="categories-wrapper">
         <div class="categories" id="category-buttons">
-            </div>
+        </div>
     </div>
     <div class="filter-search">
         <input type="search" id="search-input" placeholder="Cari mainan (pisahkan dengan ,)..." />
+        <div id="supplier-filter-container" class="supplier-combobox" style="display: none;">
+            <input type="text" id="supplier-input" placeholder="Pilih Supplier..." readonly />
+            <div id="supplier-suggestions">
+            </div>
+        </div>
         <div class="price-filter">
             <input type="number" id="min-price" placeholder="Min" />
             <input type="number" id="max-price" placeholder="Max" />
@@ -334,7 +391,7 @@
 </header>
 
 <main class="container" id="products">
-    </main>
+</main>
 <div class="popup-overlay" id="login-popup-overlay">
     <div class="popup-content">
         <button class="close-btn" onclick="closeLoginPopup()">&times;</button>
@@ -342,7 +399,6 @@
         <input type="text" id="popup-username" placeholder="Username">
         <div style="position: relative;">
             <input type="password" id="popup-password" placeholder="Password">
-            <!-- <span id="toggle-password" style="position: absolute; right: 15px; top: 32%; transform: translateY(-50%); cursor: pointer;" onclick="togglePasswordVisibility()">🔒</span> -->
         </div>
         <button onclick="attemptLogin()">Masuk</button>
         <div id="popup-login-message"></div>
@@ -5744,14 +5800,6 @@
       // Anda bisa menambahkan lebih banyak pasangan username: password di sini
     };
 
-    function togglePasswordVisibility() {
-        const passwordInput = document.getElementById('popup-password');
-        const togglePasswordIcon = document.getElementById('toggle-password');
-        const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
-        passwordInput.setAttribute('type', type);
-        // togglePasswordIcon.textContent = type === 'password' ? '🔒' : '🔓';
-    }
-
     function formatRupiah(angka) {
         const numberString = angka.toString();
         const split = numberString.split(',');
@@ -5772,6 +5820,9 @@
     const searchInput = document.getElementById('search-input');
     const minPriceInput = document.getElementById('min-price');
     const maxPriceInput = document.getElementById('max-price');
+    const supplierInput = document.getElementById('supplier-input');
+    const supplierSuggestions = document.getElementById('supplier-suggestions');
+    const supplierFilterContainer = document.getElementById('supplier-filter-container');
     const loginButton = document.getElementById('login-button');
     const logoutButtonDiv = document.getElementById('logout-button');
     const userInfoDiv = document.getElementById('user-info');
@@ -5783,63 +5834,65 @@
     let selectedCategory = 'Semua';
     let isLoggedIn = false; // Status login karyawan
     let loggedInUser = null;
+    let selectedSuppliers = []; // Array to store multiple selected suppliers
 
-    // Fungsi untuk membuka pop-up login
+    // Function to open login popup
     function openLoginPopup() {
         loginPopupOverlay.style.display = 'flex';
-        popupUsernameInput.value = ''; // Kosongkan input
-        popupPasswordInput.value = ''; // Kosongkan input
-        popupLoginMessage.textContent = ''; // Hapus pesan error sebelumnya
+        popupUsernameInput.value = '';
+        popupPasswordInput.value = '';
+        popupLoginMessage.textContent = '';
     }
 
-    // Fungsi untuk menutup pop-up login
+    // Function to close login popup
     function closeLoginPopup() {
         loginPopupOverlay.style.display = 'none';
     }
 
-    // Fungsi untuk mencoba login
+    // Function to attempt login
     function attemptLogin() {
         const username = popupUsernameInput.value;
         const password = popupPasswordInput.value;
 
-        // Simulasikan otentikasi sederhana
-        // if (username === 'karyawan' && password === 'admintelesj') {
         if (users[username] === password) {
             isLoggedIn = true;
             loggedInUser = username;
             updateLoginUI();
-            renderProducts(); // Perbarui tampilan produk setelah login
-            closeLoginPopup(); // Tutup pop-up setelah login berhasil
+            renderProducts();
+            closeLoginPopup();
         } else {
             popupLoginMessage.textContent = 'Login gagal. Cek username dan password.';
         }
     }
 
-    // Fungsi untuk logout
+    // Function for logout
     function logout() {
         isLoggedIn = false;
         loggedInUser = null;
+        selectedSuppliers = []; // Reset selected suppliers on logout
+        supplierInput.value = ''; // Clear supplier input display
         updateLoginUI();
-        renderProducts(); // Perbarui tampilan produk setelah logout
+        renderProducts();
     }
 
-    // Fungsi untuk memperbarui tampilan login/logout
+    // Function to update login/logout UI
     function updateLoginUI() {
         if (isLoggedIn) {
             loginButton.style.display = 'none';
             logoutButtonDiv.style.display = 'block';
-            // userInfoDiv.textContent = `Sumber Jaya Toys Store Hello, ${loggedInUser}!`;
+            supplierFilterContainer.style.display = 'block'; // Show supplier filter
         } else {
             loginButton.style.display = 'block';
             logoutButtonDiv.style.display = 'none';
+            supplierFilterContainer.style.display = 'none'; // Hide supplier filter
             userInfoDiv.textContent = '';
         }
     }
 
-    // Event listener untuk tombol login
+    // Event listener for login button
     loginButton.addEventListener('click', openLoginPopup);
 
-    // Membuat tombol kategori
+    // Create category buttons
     function createCategoryButtons() {
         categories.forEach(category => {
             const btn = document.createElement('button');
@@ -5861,19 +5914,128 @@
         });
     }
 
-    // Filter dan render produk
+    // Function to populate and filter supplier suggestions (now checkboxes)
+    function populateSupplierSuggestions(searchTerm = '') {
+        const uniqueSuppliers = [...new Set(products.map(p => p.supplier))].filter(Boolean).sort();
+        supplierSuggestions.innerHTML = ''; // Clear previous suggestions
+
+        // Add "Select All" checkbox
+        const selectAllLabel = document.createElement('label');
+        const selectAllCheckbox = document.createElement('input');
+        selectAllCheckbox.type = 'checkbox';
+        selectAllCheckbox.id = 'select-all-suppliers';
+        selectAllCheckbox.checked = selectedSuppliers.length === uniqueSuppliers.length && uniqueSuppliers.length > 0;
+        selectAllLabel.appendChild(selectAllCheckbox);
+        selectAllLabel.appendChild(document.createTextNode('Pilih Semua Supplier'));
+        supplierSuggestions.appendChild(selectAllLabel);
+
+        selectAllCheckbox.addEventListener('change', () => {
+            const checkboxes = supplierSuggestions.querySelectorAll('input[type="checkbox"]:not(#select-all-suppliers)');
+            if (selectAllCheckbox.checked) {
+                selectedSuppliers = [...uniqueSuppliers];
+                checkboxes.forEach(cb => (cb.checked = true));
+            } else {
+                selectedSuppliers = [];
+                checkboxes.forEach(cb => (cb.checked = false));
+            }
+            updateSupplierInputDisplay();
+            renderProducts(); // Trigger render on select/deselect all
+        });
+
+
+        const filteredSuppliers = uniqueSuppliers.filter(supplier =>
+            supplier.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+
+        filteredSuppliers.forEach(supplier => {
+            const label = document.createElement('label');
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.value = supplier;
+            checkbox.checked = selectedSuppliers.includes(supplier); // Set checked based on selectedSuppliers array
+
+            checkbox.addEventListener('change', () => {
+    if (checkbox.checked) {
+        if (!selectedSuppliers.includes(supplier)) {
+            selectedSuppliers.push(supplier);
+        }
+    } else {
+        selectedSuppliers = selectedSuppliers.filter(s => s !== supplier);
+    }
+    updateSelectAllCheckbox();
+    updateSupplierInputDisplay();
+    renderProducts();
+});
+
+            label.appendChild(checkbox);
+            label.appendChild(document.createTextNode(supplier));
+            supplierSuggestions.appendChild(label);
+        });
+
+        // Removed Apply and Clear buttons section
+        // supplierSuggestions.style.display = 'block'; // Always show suggestions when populated - keep this line
+    }
+
+    function updateSelectAllCheckbox() {
+        const uniqueSuppliers = [...new Set(products.map(p => p.supplier))].filter(Boolean);
+        const selectAllCheckbox = document.getElementById('select-all-suppliers');
+        if (selectAllCheckbox) {
+            selectAllCheckbox.checked = selectedSuppliers.length === uniqueSuppliers.length && uniqueSuppliers.length > 0;
+        }
+    }
+
+    function updateSupplierInputDisplay() {
+        if (selectedSuppliers.length === 0) {
+            supplierInput.value = 'Pilih Supplier...';
+        } else if (selectedSuppliers.length === [...new Set(products.map(p => p.supplier))].filter(Boolean).length) {
+            supplierInput.value = 'Semua Supplier Dipilih';
+        } else {
+            supplierInput.value = selectedSuppliers.join(', ');
+        }
+    }
+
+    // Event listener for the supplier input to show/hide suggestions
+    supplierInput.addEventListener('click', () => {
+        if (supplierSuggestions.style.display === 'block') {
+            supplierSuggestions.style.display = 'none';
+        } else {
+            populateSupplierSuggestions(''); // Repopulate to refresh checked states
+            supplierSuggestions.style.display = 'block'; // Explicitly show suggestions
+        }
+    });
+
+    // Close suggestions if clicked outside
+    document.addEventListener('click', (event) => {
+        if (!supplierFilterContainer.contains(event.target) && !loginPopupOverlay.contains(event.target)) {
+            supplierSuggestions.style.display = 'none';
+        }
+    });
+
+
+    // Filter and render products
     function renderProducts() {
-        const keywords = searchInput.value.trim().toLowerCase().split(',').map(k => k.trim());
+        const keywords = searchInput.value.trim().toLowerCase().split(',').map(k => k.trim()).filter(k => k !== '');
         const minPrice = parseInt(minPriceInput.value) || 0;
         const maxPrice = parseInt(maxPriceInput.value) || Infinity;
+
         productsDiv.innerHTML = '';
         const filtered = products.filter(p => {
             const matchCategory = (selectedCategory === 'Semua' || p.kategori === selectedCategory);
-            const matchKeyword = keywords.some(keyword => p.nama.toLowerCase().includes(keyword) || p.kode.toLowerCase().includes(keyword));
+            
+            const matchKeyword = keywords.length === 0 || keywords.some(keyword => 
+                p.nama.toLowerCase().includes(keyword) || p.kode.toLowerCase().includes(keyword)
+            );
+            
             const matchMinPrice = p.harga >= minPrice;
             const matchMaxPrice = p.harga <= maxPrice;
-            return matchCategory && matchKeyword && matchMinPrice && matchMaxPrice;
+            
+            // Apply supplier filter only if logged in and suppliers are selected
+            const matchSupplier = isLoggedIn ?
+                (selectedSuppliers.length === 0 || selectedSuppliers.includes(p.supplier)) : true;
+
+            return matchCategory && matchKeyword && matchMinPrice && matchMaxPrice && matchSupplier;
         });
+
         if (filtered.length === 0) {
             productsDiv.innerHTML = '<p style="grid-column: 1/-1; text-align:center; color:#555; font-weight:600;">Tidak ada produk ditemukan</p>';
             return;
@@ -5915,19 +6077,20 @@
                 <div class="product-info">
                     <div><font size="2">${p.nama}</font></div>
                 </div>
-            `;
+                `;
             productsDiv.appendChild(card);
         });
     }
 
-    // Event listener untuk pencarian dan filter
+    // Event listener for search and price filters
     searchInput.addEventListener('input', renderProducts);
     minPriceInput.addEventListener('input', renderProducts);
     maxPriceInput.addEventListener('input', renderProducts);
 
-    // Inisialisasi
+    // Initialization
     updateLoginUI();
     createCategoryButtons();
+    updateSupplierInputDisplay(); // Set initial display for supplier input
     renderProducts();
 </script>
 </body>
